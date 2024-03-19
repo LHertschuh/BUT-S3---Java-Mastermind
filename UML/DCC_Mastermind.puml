@@ -1,0 +1,215 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam classFontStyle Bold
+skinparam style strictuml
+hide empty members
+
+class Mastermind {
+    +{static}main(args:String[*])
+}
+
+Mastermind ..> Modeles.Partie : <<cree>>
+Mastermind ..> Controleurs.CtrlPartie : <<cree>>
+Mastermind ..> Controleurs.CtrlManche : <<cree>>
+Mastermind ..> Controleurs.CtrlCombinaison : <<cree>>
+Mastermind ..> Vues.EcranDeDemarrage : <<cree>>
+Mastermind ..> Vues.EcranDeJeu : <<cree>>
+Mastermind ..> Vues.EcranDeFin : <<cree>>
+
+package Modeles {
+    class Partie {
+        -nom_utilisateur : String
+        -nb_manches : Integer
+        -num_manche : Integer
+        -nb_pions_dispo : Integer
+        -scores : Integer[]
+        -victoires : Boolean[]
+        -nb_tentatives : Integer
+        -nb_pions_combi : Integer
+
+        +<<Create>> Partie(nom_utilisateur : String, nb_manches : Integer \n\t\t\t\t nb_pions_dispo : Integer, nb_tentatives : Integer \n\t\t\t\t, nb_pions_combi : Integer )
+        +nouvelleManche()
+        +obtenirScores() : Integer[nb_manches]
+        +obtenirNom() : String
+        +obtenirManche() : Manche
+        +obtenirVictoires() : Boolean[nb_manches]
+
+    }
+
+
+    class Manche {
+        -num_tentatives : Integer
+        -nb_pions_combi : Integer
+        -nb_pions_dispo : Integer
+
+        +<<Create>>Manche(nb_tentatives : Integer, nb_pion_combi : Integer, nb_pions_dispo : Integer)
+        +nouvelleTentative()
+        +obtenirDerniereTentative() : Combinaison
+        +obtenirTentatives() : Combinaisons[nb_pions_combi]
+        +obtenirDerniereLigneIndice() : LigneIndice
+        +obtenirLignesIndices() : LigneIndice[nb_pions_combi]
+        +obtenirCombinaisonSecrete() : Combinaison
+        +validerTentative()
+        +verifierVictoire() : Boolean
+        -verifieNumTentatives() : Boolean
+        +calculerScore() : Integer
+
+    }
+
+    class Combinaison {
+        -nb_pions_dispo : Integer
+        +<<Create>>Combinaison(nb_pions_combi : Integer, nb_pions_dispo : Integer)
+        +genererSecrete(nb_pions_dispo : Integer)
+        +combinaisonRemplie() : Boolean
+        +longueur() : Integer
+        +pionEstPresent(check : Pion) : Boolean
+        +placerPion(index : Integer, pion : Pion)
+        +lirePion(index : Integer) : Pion
+        +remettreAZero()
+    }
+
+    class LigneIndice {
+        +<<Create>>LigneIndice(nb_pions_combi : Integer)
+        +remplissageLigneIndice( tentative : Combinaison, secrete : Combinaison)
+
+    }
+
+    enum Pion <<enum>> {
+        ROUGE
+        VERT
+        BLEU
+        JAUNE
+        MARRON
+        ORANGE
+        NOIR
+        BLANC
+    }
+
+    enum Indice <<enum>> {
+        ABSENT
+        BIEN_PLACE
+        MAL_PLACE
+    }
+
+    Partie "1" *--> "- _manche \n 1" Manche  : > lance
+
+    Manche "1"  o--> "- _tentatives \n 1..12" Combinaison : > composée de
+    Manche "1"  o--> "- _lignes_indices \n 1..12" LigneIndice : > associée à
+    Manche "1"  o--> "- _secrete \n 1" Combinaison : > possède
+
+    LigneIndice "1"  o--> "- _indices \n 1..6" Indice : > possède
+    Combinaison "1"  o--> "- _pions \n 1..6" Pion : > possède
+
+    Combinaison <-r-o LigneIndice : <<compare>>
+}
+
+package Controleurs{
+    class CtrlPartie{
+        +<<Create>>CtrlPartie(partie : Partie)
+        +modifierNom(nom : String)
+        +modifierNbManches(nb : Integer)
+        +modifierNbTentatives(nb : Integer)
+        +modifierNbPionsDispo(nb : Integer)
+        +modifierNbPionsCombi(nb : Integer)
+        +selectionneModeIndice(mode : Mode)
+        +lancerPartie()
+        +nouvelleManche(abandon : Boolean)
+        +obtenirResultats() :
+        +obtenirNom() : String
+        +obtenirScores() : Integer[nb_manches]
+        +obtenirVictoires() : Boolean[nb_manches]
+    }
+
+    class CtrlManche{
+        +<<Create>>CtrlManche(manche : Manche)
+        +modifierNbTentatives(nb : Integer)
+        +modifierNbPionsCombi(nb : Integer)
+        +selectionneModeIndice(mode : Mode)
+        +changerManche(manche : Manche)
+        +validerTentative()
+        +viderTentative()
+        +obtenirTentatives() : Combinaison[nb_manches]
+        +obtenirDerniereTentative() : Combinaison
+        +obtenirCombinaisonSecrete() : Combinaison
+        +obtenirLignesIndices() : LigneIndice[nb_manches]
+        +obtenirDerniereLigneIndice() : LigneIndice
+    }
+
+    class CtrlCombinaison{
+        +<<Create>>CtrlCombinaison(combinaison : Combinaison)
+        +changerTentative(combinaison : Combinaison)
+        +placerPion(index : Integer, pion : Pion)
+        +remettreAZero()
+        +obtenirPions : Pion[nb_pions_combi]
+
+    }
+
+
+
+    CtrlPartie ...r> CtrlManche : <<change la manche>>
+    CtrlManche ...d> CtrlCombinaison: <<change la tentative>>
+}
+
+package Vues{
+    class ModeContext {
+
+    }
+
+    interface Mode <<interface>> {
+        +afficherIndices()
+    }
+
+    class ModeFacile implements Mode{
+        +<<Create>>ModeFacile()
+        +afficherIndices()
+    }
+
+    class ModeClassique implements Mode{
+        +<<Create>>ModeClassique()
+        +afficherIndices()
+    }
+
+    class ModeNumerique implements Mode{
+        +<<Create>>ModeNumerique()
+        +afficherIndices()
+    }
+    class EcranDeDemarrage {
+        +<<Create>> EcranDeDemarrage(ctrlpartie : CtrlPartie)
+        +modifierNbManches()
+        +modifierNbTentatives()
+        +modifierNbPionsDispo()
+        +modifierNbPionsCombi()
+        +selectionneModeIndice()
+        +lancerPartie()
+    }
+
+    class EcranDeFin{
+        +<<Create>>EcranDeFin (ctrlpartie :ctrlPartie )
+        +afficherResultats()
+    }
+
+    class EcranDeJeu {
+        +<<Create>> EcranDeJeu (ctrlpartie : CtrlPartie, ctrlmanche CtrlManche, ctrlpions : ctrlPions)
+        +abandonneCtrlPartieManche()
+        +validerTentative()
+        +placerPion()
+        +viderDerniereTentative()
+        +selectionneModeIndice()
+    }
+}
+
+Controleurs.CtrlPartie      "1" o--r> "partie \n 1"      Modeles.Partie : > Lance & initialise
+Controleurs.CtrlManche      "1" o--r> "manche \n 1"      Modeles.Manche : > Lance & initialise"
+Controleurs.CtrlCombinaison "1" o--r> "combinaison \n 1" Modeles.Combinaison : > Modifie
+
+
+Vues.EcranDeDemarrage "1" o--> "1\n controleur_partie" Controleurs.CtrlPartie : > Appelle
+
+Vues.EcranDeFin "1" o--> "1\n controleur_partie" Controleurs.CtrlPartie : > Appelle
+
+
+Vues.EcranDeJeu "1" o--> "1\n controleur_partie"      Controleurs.CtrlPartie : > Appelle
+Vues.EcranDeJeu "1" o--> "1\n controleur_manche"      Controleurs.CtrlManche : > Appelle
+Vues.EcranDeJeu "1" o--> "1\n controleur_combinaison" Controleurs.CtrlCombinaison : > Appelle
+
+@enduml

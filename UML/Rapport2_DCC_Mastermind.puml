@@ -1,0 +1,297 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam classFontStyle Bold
+skinparam style strictuml
+hide empty members
+
+class Mastermind {
+    +{static}main(args:String[*])
+}
+
+Mastermind ..> Modele.Mastermind : <<cree>>
+Mastermind ..> Controleur.PartieControleur : <<cree>>
+Mastermind ..> Vue.EcranDeDemarrage : <<cree>>
+
+
+package Modele {
+
+
+    interface PartieObservateur{
+        +majTentative()
+        +majSuppTentative()
+        +majCombinaison(index : Integer, pion : Pion)
+        +majCombiSecrete(combinaison : Combinaison)
+        +majFinDeManche()
+        +majNouvelleManche()
+        +majFinDePartie(nom_joueur : String, victoire : Boolean[], scores : Integer[])
+        +majIndice(ligne_indice : LigneIndice)
+
+    }
+
+    PartieObservateur ..> Pion
+    PartieObservateur ..> Combinaison
+    PartieObservateur ..> LigneIndice
+
+    class Mastermind {
+    -partie : Partie
+    +<<Create>> Mastermind()
+    +avoirPartie() : Partie
+    +creerPartie(nom_utilisateur : String, nb_manches : Integer, nb_pions_dispo : Integer, nb_tentatives : Integer, nb_pions_combi Integer)
+    +ajouteObservateur(observateur PartieObservateur)
+    +ajouteObservateurAPartie()
+    }
+
+   Modele.Mastermind "1" o--> "_observateurs \n *" Modele.PartieObservateur: > observe
+   Modele.Mastermind "1" *--> "_ \n" Modele.Partie : > possède
+
+
+    class Partie {
+        -nom_utilisateur : String
+        -nb_manches : Integer
+        -num_manche : Integer
+        -nb_pions_dispo : Integer
+        -scores : Integer[]
+        -victoires : Boolean[]
+        -nb_tentatives : Integer
+        -nb_pions_combi : Integer
+        -mode_indice : String
+
+        +<<Create>> Partie(nom_utilisateur : String, nb_manches : Integer \n\t\t\t\t nb_pions_dispo : Integer, nb_tentatives : Integer \n\t\t\t\t, nb_pions_combi : Integer )
+        +obtenirScores() : Integer[]
+        +obtenirNom() : String
+        +obtenirManche() : Manche
+        +obtenirVictoires() : Boolean[]
+        +obtenirNbTentatives() : Integer
+        +obtenirNbPionsCombi() : Integer
+        +obtenirNbPionsDispo() : Integer
+        +obtenirNbManches() : Integer
+        +nouvelleManche()
+        +changerModeIndice(mode_indice : String)
+        +ajouteObservateur(observateur : PartieObservateur)
+        +ajoutObservateurAManche(manche : Manche)
+        -notifieNouvelleManche()
+        -notifieFinPartie()
+
+    }
+
+   Modele.Partie "1" *--> "-_manche \n 1" Modele.Manche  : > lance
+   Modele.Partie "1" o--> "_observateurs \n *" Modele.PartieObservateur: > observe
+
+ '  Modele.Partie ..> Modele.Manche
+ ' Modele.Partie ..> Modele.PartieObservateur
+
+    class Manche {
+        -num_tentatives : Integer
+        -nb_pions_combi : Integer
+        -nb_pions_dispo : Integer
+
+        +<<Create>>Manche(nb_tentatives : Integer, nb_pion_combi : Integer, nb_pions_dispo : Integer)
+
+        +obtenirDerniereTentative() : Combinaison
+        +obtenirDerniereLigneIndice() : LigneIndice
+        #verifierVictoire() : Boolean
+        -verifieNumTentatives() : Boolean
+        #calculerScore(mode_indice String) : Integer
+        #nouvelleTentative()
+        +supprimerCombinaison()
+        +finDeManche()
+        +validerTentative()
+        +ajouteObservateur(observateur : PartieObservateur)
+        +ajouteObservateurACombinaison(combi : Combinaison)
+        -notifieNouvelleTentative()
+        -notifieAfficheCombiSecrete(combinaison : Combinaison)
+        -notifieSuppressionCombi()
+        -notifieFinDeManche()
+        -notifieLigneIndice()
+    }
+
+
+    Modele.Manche "1"  o--> "- _secrete \n 1" Modele.Combinaison : > possède
+    Modele.Manche "1"  o--> "- _tentatives \n 2..12" Modele.Combinaison : > composée de
+    Modele.Manche "1"  o--> "- _lignes_indices \n 2..12" Modele.LigneIndice : > associée à
+    Modele.Manche "1" o--> "_observateurs \n *" Modele.PartieObservateur: > observe
+
+
+
+    class Combinaison {
+        -nb_pions_dispo : Integer
+        +<<Create>>Combinaison(nb_pions_combi : Integer, nb_pions_dispo : Integer)
+        #avoirNombreCouleur(pion : Pion) : Integer
+        #pionEstPresent(check : Pion) : Boolean
+        +lirePion(index : Integer) : Pion
+        #combinaisonRemplie() : Boolean
+        #genererSecrete()
+        +placerPion(index : Integer, pion : Pion)
+        +ajouteObservateur(observateur : PartieObservateur)
+        -notifiePlacerPion(index : Integer, pion : Pion)
+    }
+
+        Modele.Combinaison "1"  o--> "- _pions \n 2..6" Modele.Pion : > possède
+        Modele.Combinaison "1" o--> "_observateurs \n *" Modele.PartieObservateur: > observe
+
+    class LigneIndice {
+        +<<Create>>LigneIndice(nb_pions_combi : Integer)
+        -compteNombrePionListe(pion_ajoute Pion[*], piopn Pion) : Integer
+        +avoirIndiceIndex(index : Integer) : Indice
+        +tailleLigneIndice() : Integer
+        #remplissageLigneIndice( tentative : Combinaison, secrete : Combinaison)
+
+    }
+    'Model.LigneIndice
+    'Combinaison <-r-o LigneIndice : <<compare>>
+    Modele.LigneIndice "1"  o--> "- _indices \n 1..6" Modele.Indice : > possède
+   Modele.LigneIndice ..> Modele.Combinaison
+
+    enum Pion <<enum>> {
+        ROUGE
+        VERT
+        BLEU
+        JAUNE
+        MARRON
+        ORANGE
+        NOIR
+        BLANC
+    }
+
+    enum Indice <<enum>> {
+        ABSENT
+        BIEN_PLACE
+        MAL_PLACE
+    }
+
+
+
+
+
+}
+
+package Controleur{
+    class PartieControleur{
+        +<<Create>>PartieControleur(mastermind : Mastermind)
+        +ajouteObservateurPartie(observa : PartieObservateur)
+        +creerPartie(nom_utilisateur : String, nb_manches : Integer, nb_pions_dispo : Integer, nb_tentatives : Integer, nb_pions_combi : Integer)
+        +suppressionCombinaison()
+        +ajoutPionCombinaison(index : Integer, num_pion : Integer)
+        +validerCombinaison()
+        +mancheSuivante()
+        +abandonnerManche()
+        +recommancerPartiePareil()
+        +changerModeIndice(mode_indice : String)
+
+    }
+
+      Controleur.PartieControleur "1" *--> "_mastermind \n 1" Modele.Mastermind : > contrôle
+
+    Controleur.PartieControleur ..> Modele.PartieObservateur
+
+
+}
+
+package Vue{
+
+    class EcranDeDemarrage{
+        +<<Create>>EcranDeDemarrage(controleur_partie : PartieControleur)
+        -miseEnPlaceMenu()
+        -changerImageEnFonctionDuMode(selectedMode : String)
+
+    }
+
+    Vue.EcranDeDemarrage "*" *-> "_controleur_partie \n 1" Controleur.PartieControleur
+    Vue.EcranDeDemarrage ..> Vue.EcranDeJeu
+    Vue.EcranDeDemarrage ..> Vue.IndiceStrategie
+    Vue.EcranDeDemarrage -|> javax.swing.JFrame
+
+    class EcranDeFin{
+        +<<Create>>EcranDeFin(nom_joueur : String, victoire : Boolean[], scores : Integer[], \n parametres : Integer[], indice_strategie IndiceStrategie, controleur_partie PartieControleur)
+        -totalVictoire(victoire : Boolean[]) : Boolean
+        -totalScore(score : Integer[]) : Integer
+    }
+    Vue.EcranDeFin "*" *-> "_controleur_partie \n 1" Controleur.PartieControleur
+    Vue.EcranDeFin ..> Vue.EcranDeDemarrage
+    Vue.EcranDeFin ..> Vue.EcranDeJeu
+    Vue.EcranDeFin ..> Vue.IndiceStrategie
+    Vue.EcranDeFin  -|> javax.swing.JFrame
+    
+    class EcranDeJeu{
+        -num_tentatives : Integer
+        -pion_selectionne : Integer
+        -parametres : Integer[]
+        -num_manche : Integer
+        -nb_manches_max : Integer
+        -nb_pions_combi : Integer
+        +<<Create>>EcranDeJeu(nb_manches : Integer, nb_pions_dispo Integer, nb_tentatives Integer, nb_pions_combi Integer, controleur PartieControleur)
+        -viderIndice()
+        -ajoutLigneCombiSecrete(nb_pions_combi : Integer)
+        -selectionPion( nb_pions_dispo : Integer )
+        #{static}rogneurImageIcon(source : String, x : Integer)
+        #{static}rogneurImageIcon(source : String, x : Integer, y : Integer)
+        +changerIndiceStrategie(algorithme : IndiceStrategie)
+        +majCombinaison(index : Integer, pion Pion)  {redefines PartieObservateur::majCombinaison}
+        +majCombiSecrete(combinaison : Combinaison) {redefines PartieObservateur::majCombiSecrete}
+        +majFinDeManche() {redefines PartieObservateur::majFinDeManche}
+        +majNouvelleManche() {redefines PartieObservateur::majNouvelleManche}
+        +majFinDeParte() {redefines PartieObservateur::majFinDePartie}
+        +majSuppTentative() {redefines PartieObservateur::majSuppTentative}
+        +majTentative() {redefines PartieObservateur::majTentative}
+        +majIndice(ligne_incide : LigneIndice) {redefines PartieObservateur::majIndice}
+
+    }
+
+    Vue.EcranDeJeu "*" *-> "controleur \n 1" Controleur.PartieControleur
+    Vue.EcranDeJeu "*" *-> "indice_strategie \n 1" IndiceStrategie
+    'Vue.EcranDeJeu ..> Vue.IndiceStrategie
+    Vue.EcranDeJeu ..> Modele.Pion
+    Vue.EcranDeJeu ..> Modele.Combinaison
+    Vue.EcranDeJeu ..> Modele.LigneIndice
+    Vue.EcranDeJeu +-- Vue.MouseHandlerPionASelectionner
+    Vue.EcranDeJeu +-- Vue.MouseHandlerPionCombinaison
+    Vue.EcranDeJeu  -|> javax.swing.JFrame
+
+
+    Vue.EcranDeJeu ..|> Modele.PartieObservateur
+
+    class MouseHandlerPionASelectionner{
+    +mouseEntered(evt : MouseEvent)  {redefines MouseAdapter::mouseEntered}
+    +mouseExited(evt : MouseEvent) {redefines MouseAdapter::mouseExited}
+    }
+
+
+    class MouseHandlerPionCombinaison{
+    +mouseEntered(evt : MouseEvent)  {redefines MouseAdapter::mouseEntered}
+    +mousePressed(evt : MouseEvent) {redefines MouseAdapter::mousePressed}
+    +mouseExited(evt : MouseEvent) {redefines MouseAdapter::mouseExited}
+    }
+
+    Vue.MouseHandlerPionASelectionner -|> java.awt.event.MouseAdapter
+    Vue.MouseHandlerPionCombinaison -|> java.awt.event.MouseAdapter
+
+
+    interface IndiceStrategie{
+    +ajoutIndice(ligne_indice LigneIndice) : JPanel
+    }
+
+    Vue.IndiceStrategie ..> Modele.LigneIndice
+
+    class IndiceClassique{
+    +ajoutIndice(ligne_indice : LigneIndice) : JPanel {redefines IndiceStrategie::ajoutIndice}
+    }
+    Vue.IndiceClassique .|> Vue.IndiceStrategie
+
+    class IndiceFacile{
+    +ajoutIndice(ligne_indice : LigneIndice) : JPanel {redefines IndiceStrategie::ajoutIndice}
+    }
+    Vue.IndiceFacile .|> Vue.IndiceStrategie
+
+    class IndiceNumerique{
+    +ajoutIndice(ligne_indice : LigneIndice) : JPanel {redefines IndiceStrategie::ajoutIndice}
+    }
+    Vue.IndiceNumerique .|> Vue.IndiceStrategie
+}
+package java.awt.event{
+class MouseAdapter{}
+}
+package javax.swing{
+class JFrame
+}
+
+@enduml
